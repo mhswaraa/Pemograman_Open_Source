@@ -1,48 +1,35 @@
-const http = require("http");
-const fs = require("fs");
-const path = require("path");
+const express = require("express");
+const app = express();
 const port = 8080;
 
-http.createServer(function (req, res) {
-    console.log("Aplikasi berjalan pada port: " + port);
-    console.log("Request for image received.");
+// Konfigurasi EJS sebagai mesin templat
+app.set('view engine', 'ejs');
+app.set('views', __dirname + '/views');
 
-    if (req.url === "/") {
-        // Serve the HTML file
-        fs.readFile(path.join(__dirname, "index.html"), "utf8", (err, data) => {
-            if (err) {
-                res.writeHead(500, { "Content-Type": "text/plain" });
-                res.end("Internal Server Error");
-                return;
-            }
-            res.writeHead(200, { "Content-Type": "text/html" });
-            res.end(data);
-        });
-    } else if (req.url === "/styles.css") {
-        // Serve the CSS file
-        fs.readFile(path.join(__dirname, "styles.css"), "utf8", (err, data) => {
-            if (err) {
-                res.writeHead(500, { "Content-Type": "text/plain" });
-                res.end("Internal Server Error");
-                return;
-            }
-            res.writeHead(200, { "Content-Type": "text/css" });
-            res.end(data);
-        });
-    } else if (req.url === "/image.jpg") {
-        // Serve the image file
-        fs.readFile(path.join(__dirname, "/image.jpg"), (err, data) => {
-            if (err) {
-                res.writeHead(500, { "Content-Type": "text/plain" });
-                res.end("Internal Server Error");
-                return;
-            }
-            res.writeHead(200, { "Content-Type": "image/jpg" });  // Ganti sesuai tipe gambar
-            res.end(data);
-        });
-    } else {
-        // Handle other requests (if any)
-        res.writeHead(404, { "Content-Type": "text/plain" });
-        res.end("Not Found");
-    }
-}).listen(port);
+app.use(express.json());
+const homeRoute = require("./routes/home");
+const bukuRoute = require("./routes/buku");
+const userRoute = require("./routes/user");
+const assetsRoute = require("./routes/assets"); 
+const pageRoute = require("./routes/page"); 
+const partialRoute = require("./routes/partial"); 
+
+// Middleware untuk menangani kesalahan
+app.use((err, req, res, next) => {
+    console.error(err.stack);
+    res.status(500).json({
+        error: 'Internal Server Error',
+        message: err.message
+    });
+});
+
+app.use("/", homeRoute);
+app.use("/user", userRoute);
+app.use("/buku", bukuRoute);
+app.use("/assets", assetsRoute);
+app.use("/page", pageRoute);
+app.use("/partial", partialRoute);
+
+app.listen(port, () => {
+    console.log("Server Berjalan di Port " + port);
+});
